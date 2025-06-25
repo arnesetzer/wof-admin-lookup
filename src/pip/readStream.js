@@ -21,13 +21,18 @@ function getSqliteFilePaths(root) {
 
 function readSqliteRecords(datapath, layer) {
   const sqliteStream = combinedStream.create();
-  getSqliteFilePaths(path.join(datapath, 'sqlite')).forEach(dbPath => {
+  let sqlitePath = datapath;
+  if (fs.existsSync(path.join(datapath, 'sqlite'))) {
+    // If the sqlite directory exists, we will read from it
+    sqlitePath = path.join(datapath, 'sqlite');
+  }
+  getSqliteFilePaths(sqlitePath).forEach(dbPath => {
     sqliteStream.append(next => {
       next(new SQLiteStream(
         dbPath,
         config.importPlace ?
-        SQLiteStream.findGeoJSONByPlacetypeAndWOFId(layer, config.importPlace) :
-        SQLiteStream.findGeoJSONByPlacetype(layer)
+          SQLiteStream.findGeoJSONByPlacetypeAndWOFId(layer, config.importPlace) :
+          SQLiteStream.findGeoJSONByPlacetype(layer)
       ));
     });
   });
@@ -46,7 +51,7 @@ function readSqliteRecords(datapath, layer) {
 function readData(datapath, layer, localizedAdminNames, callback) {
   const features = [];
 
-  readSqliteRecords(datapath,layer)
+  readSqliteRecords(datapath, layer)
     .pipe(whosonfirst.recordHasIdAndProperties())
     .pipe(whosonfirst.isActiveRecord())
     .pipe(filterOutPointRecords.create())
@@ -57,7 +62,7 @@ function readData(datapath, layer, localizedAdminNames, callback) {
     .pipe(sink.obj((feature) => {
       features.push(feature);
     }))
-    .on('finish', function() {
+    .on('finish', function () {
       callback(features);
     });
 

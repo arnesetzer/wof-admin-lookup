@@ -44,10 +44,13 @@ module.exports.create = function createPIPService(datapath, layers, localizedAdm
   // ie - _.intersection([1, 2, 3], [3, 1]) === [1, 3]
   layers = _.intersection(defaultLayers, _.isEmpty(layers) ? defaultLayers : layers);
 
-  const folder = path.join(datapath, 'sqlite');
-  if (!fs.existsSync(folder)) {
+  if (!fs.existsSync(datapath)) {
+    return callback(`unable to locate whosonfirst folder. The path '${datapath}' does not exist.`);
+  }
+  //Check for the legacy format (wof-folder/sqlite/*.db)
+  if (!fs.existsSync(path.join(datapath, 'sqlite'))) {
     return callback(`unable to locate sqlite folder. Please ensure that the whosonfirst data follows the structure: 
-    whosonfirstPath/sqlite/whosonfirst-data-*.db`);
+      /whosonfirstPath/whosonfirst-data-*.db`);
   }
 
   logger.info(`starting with layers ${layers}`);
